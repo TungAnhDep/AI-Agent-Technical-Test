@@ -1,14 +1,9 @@
-from vnstock import Quote,Company # Thư viện dữ liệu chứng khoán VN
+from vnstock import Quote,Company
 import pandas_ta as ta
 import pandas as pd
 import json
 from langchain_core.tools import tool
-# import asyncio
-# import httpx
-# from playwright.async_api import async_playwright
-# from docling.datamodel.base_models import InputFormat
-# from docling.document_converter import DocumentConverter
-# Giả lập Database (Trong thực tế bạn nên dùng SQLite, Postgres hoặc Redis)
+
 @tool
 def get_stock_data(ticker: str, days:  str = '100', interval: str = 'd', windows: int = 20):
     """Truy xuất dữ liệu giá lịch sử từ vnstock"""
@@ -68,6 +63,6 @@ def get_company_info(ticker: str, category: str, filter_by: str = 'working'):
         else:
             df = data_func()
         result = df.to_dict(orient='records')
-        return result[:3] # Giới hạn số lượng bản ghi (ví dụ tin tức chỉ lấy 10 tin mới nhất)
+        return result[:3] # Giới hạn số lượng bản ghi
     except Exception as e:
         return f"Lỗi khi truy xuất dữ liệu: {str(e)}"

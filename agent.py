@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 import os
 from dotenv import load_dotenv
@@ -8,12 +7,6 @@ from langchain_core.messages import BaseMessage, HumanMessage,ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 import operator
 from tools import get_stock_data, get_company_info
-
-
-
-
-
-
 class AgentState(TypedDict):
     messages: Annotated[List, operator.add]
 load_dotenv()
@@ -52,19 +45,19 @@ workflow.add_edge("tool_hands", "gemini_brain")
 
 app = workflow.compile()
 
-def run_financial_agent(query: str):
-    print(f"User Request: {query}")
-    for event in app.stream({"messages": [HumanMessage(content=query)]}):
-        for node, value in event.items():
-            last_msg = value["messages"][-1]
-            if node == "gemini_brain":
-                if last_msg.tool_calls:
-                    print(f"--- AI quyết định gọi hàm: {last_msg.tool_calls[0]['name']} ---")
-                else:
-                    print(f"--- AI trả lời: {last_msg.content} ---")
-            elif node == "tool_hands":
-                print(f"--- Hệ thống đã lấy dữ liệu: {last_msg.content} ---")
+# def run_financial_agent(query: str):
+#     print(f"User Request: {query}")
+#     for event in app.stream({"messages": [HumanMessage(content=query)]}):
+#         for node, value in event.items():
+#             last_msg = value["messages"][-1]
+#             if node == "gemini_brain":
+#                 if last_msg.tool_calls:
+#                     print(f"--- AI quyết định gọi hàm: {last_msg.tool_calls[0]['name']} ---")
+#                 else:
+#                     print(f"--- AI trả lời: {last_msg.content} ---")
+#             elif node == "tool_hands":
+#                 print(f"--- Hệ thống đã lấy dữ liệu: {last_msg.content} ---")
 
-if __name__ == "__main__":
-    user_query = "Cho tôi biết giá lịch sử FPT trong vòng 30 ngày và thông tin về lãnh đạo công ty này."
-    run_financial_agent(user_query)
+# if __name__ == "__main__":
+#     user_query = "Cho tôi biết giá lịch sử FPT trong vòng 30 ngày và thông tin về lãnh đạo công ty này."
+#     run_financial_agent(user_query)
