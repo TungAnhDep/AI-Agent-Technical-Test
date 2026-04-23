@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List, Optional
+from typing import List
+
 import uvicorn
-from agent import app as agent_workflow
+from fastapi import FastAPI, HTTPException
 from langchain_core.messages import HumanMessage
+from pydantic import BaseModel
+
+from agent import app as agent_workflow
 
 app = FastAPI(title="Financial AI Agent API", version="1.0")
 

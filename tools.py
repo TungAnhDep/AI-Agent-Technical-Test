@@ -1,8 +1,8 @@
-from vnstock import Quote,Company
-import pandas_ta as ta
-import pandas as pd
-import json
 from langchain_core.tools import tool
+from vnstock import Company, Quote
+
+from database.db import NewsDB
+
 
 @tool
 def get_stock_data(ticker: str, days:  str = '100', interval: str = 'd', windows: int = 20):
@@ -66,3 +66,30 @@ def get_company_info(ticker: str, category: str, filter_by: str = 'working'):
         return result[:3] # Giới hạn số lượng bản ghi
     except Exception as e:
         return f"Lỗi khi truy xuất dữ liệu: {str(e)}"
+
+@tool
+def get_market_sentiment(ticker: str, limit: int = 5):
+    """Truy xuất điểm tâm lý và tóm tắt tin tức mới nhất của một mã cổ phiếu từ database."""
+    
+    with NewsDB() as db:
+        query = """
+            SELECT title, sentiment_score, summary, created_at 
+            FROM financial_news 
+            WHERE ticker = %s AND is_analyzed = TRUE
+            ORDER BY created_at DESC LIMIT %s
+        """
+        db.cur.execute(query, (ticker.upper(), limit))
+        rows = db.cur.fetchall()
+        
+        if not rows:
+            return f"Không tìm thấy dữ liệu tâm lý gần đây cho mã {ticker}."
+            
+        results = []
+        for r in rows:
+            results.append({
+                "title": r[0],
+                "sentiment": "Positive" if r[1] > 0.3 else "Negative" if r[1] < -0.3 else "Neutral",
+                "summary": r[2],
+                "date": str(r[3])
+            })
+        return results
