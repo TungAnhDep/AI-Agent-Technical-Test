@@ -8,7 +8,7 @@ import requests
 from PIL import Image
 from playwright.async_api import async_playwright
 
-from db.db import NewsDB
+from database.db import NewsDB
 
 
 async def crawl_cafef(ticker, url):

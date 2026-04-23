@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from langchain_core.output_parsers.json import JsonOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from db.db import NewsDB
+from database.db import NewsDB
 
 load_dotenv()
 api_key = os.getenv("GOOGLE_API")
