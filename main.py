@@ -38,7 +38,17 @@ async def chat_endpoint(request: ChatRequest):
                     if last_msg.tool_calls:
                         step_info["action"] = f"Gọi hàm: {last_msg.tool_calls[0]['name']}"
                     else:
-                        final_answer = last_msg.content
+                        content = last_msg.content
+        
+                        if isinstance(content, list):
+                            # Nếu là list, tìm và nối tất cả các phần có type là 'text'
+                            final_answer = "".join([
+                                part['text'] for part in content 
+                                if isinstance(part, dict) and part.get('type') == 'text'
+                            ])
+                        else:
+                            # Nếu đã là string thì gán trực tiếp
+                            final_answer = str(content)
                         step_info["action"] = "Trả lời cuối cùng"
                 elif node == "tool_hands":
                     step_info["action"] = "Đã lấy dữ liệu từ hệ thống"

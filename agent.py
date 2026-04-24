@@ -16,7 +16,7 @@ class AgentState(TypedDict):
     messages: Annotated[List, operator.add]
 load_dotenv()
 api_key = os.getenv("GOOGLE_API")
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", temperature=0, api_key = api_key)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, api_key = api_key)
 tools = [get_stock_data, get_company_info, get_market_sentiment, get_technical_indicators]
 llm_with_tools = llm.bind_tools(tools)
 
