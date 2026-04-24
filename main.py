@@ -2,13 +2,14 @@ from typing import List
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 
 from agent import app as agent_workflow
 
 app = FastAPI(title="Financial AI Agent API", version="1.0")
-
+app.mount("/download", StaticFiles(directory="exports"), name="download")
 # Cấu trúc dữ liệu đầu vào cho API
 class ChatRequest(BaseModel):
     query: str

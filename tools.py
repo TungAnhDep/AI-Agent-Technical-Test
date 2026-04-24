@@ -1,11 +1,67 @@
+import dateparser
+import os
+
+from datetime import datetime, timedelta
+from typing import Optional  # Thêm import này
+
 from langchain_core.tools import tool
 from vnstock import Company, Quote
 
 from database.db import NewsDB
 
+EXPORT_DIR = "exports"
+os.makedirs(EXPORT_DIR, exist_ok=True)
 
 @tool
-def get_stock_data(ticker: str, days:  str = '100', interval: str = 'd', windows: int = 20):
+def get_stock_data(ticker: str, start_date: Optional[str] = None, end_date: Optional[str] = None, months: Optional[int] = None):
+    """
+    Truy xuất dữ liệu giá lịch sử.
+    Args:
+        ticker: Mã chứng khoán (ví dụ: 'FPT', 'VCB').
+        start_date: Ngày bắt đầu (định dạng 'DD-MM-YYYY'). 
+        end_date: Ngày kết thúc (định dạng 'DD-MM-YYYY'). Nếu không có, mặc định là hôm nay.
+        months: Số tháng gần nhất muốn lấy dữ liệu (ví dụ: 3, 6). Nếu có start_date thì bỏ qua tham số này.
+    """
+    try:
+        quote = Quote(symbol=ticker.upper(), source='KBS')
+        
+        current_date = datetime.now()
+        if not end_date:
+            end_date = current_date.strftime('%d-%m-%Y')
+            
+        if start_date:
+            parsed_date = dateparser.parse(start_date, settings={'DATE_ORDER': 'DMY'})
+            if parsed_date:
+                start_date = parsed_date.strftime('%d-%m-%Y')
+            df = quote.history(start=start_date, end=end_date, interval='d')
+        elif months:
+            # Lấy theo số tháng gần nhất
+            start_calc = (current_date - timedelta(days=months * 30)).strftime('%d-%m-%Y')
+            df = quote.history(start=start_calc, end=end_date, interval='d')
+        else:
+            # Mặc định lấy 100 ngày nếu không có yêu cầu cụ thể
+            df = quote.history(length='100', interval='d')
+
+        if df is None or df.empty:
+            return f"Không có dữ liệu cho mã {ticker} trong khoảng thời gian yêu cầu."
+        file_name = f"{ticker}_history_{datetime.now().strftime('%d%m%Y_%H%M%S')}.xlsx"
+        file_path = os.path.join(EXPORT_DIR, file_name)
+        df_export = df.reset_index()
+        df_export.to_excel(file_path, index=False)
+        recent_data = df_export.tail(5).to_dict(orient='records')
+        download_link = f"http://localhost:8000/download/{file_name}"
+        return {
+            "message": f"Đã xuất dữ liệu lịch sử của {ticker} vào file {file_name}.",
+            "download_url": download_link,
+            "excel_file_path": file_path,
+            "recent_data": recent_data
+        }
+    except Exception as e:
+        return f"Lỗi khi xử lý dữ liệu: {str(e)}"
+
+
+@tool
+def get_technical_indicators(ticker: str, days:  str = '100', interval: str = 'd', windows: int = 20):
     """Truy xuất dữ liệu giá lịch sử từ vnstock"""
     quote = Quote(symbol=ticker, source='KBS')
     df = quote.history(length=days, interval=interval)
@@ -13,12 +69,6 @@ def get_stock_data(ticker: str, days:  str = '100', interval: str = 'd', windows
     df.ta.rsi(length=windows, append=True)
     # latest = df.iloc[-1]
     result = {
-        "ticker": ticker,
-        "open":df['open'].iloc[0],
-        "highest": df['high'].max(),
-        "lowest": df['low'].min(),
-        "avg_volumn": df['volume'].mean(),
-        "close": df['close'].iloc[-1],
         "SMA": df[f'SMA_{windows}'].iloc[-1],
         "RSI": df[f'RSI_{windows}'].iloc[-1]
     }

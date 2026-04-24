@@ -1,14 +1,15 @@
 
 import operator
 import os
-from typing import Annotated, List, TypedDict
+from datetime import datetime
 
 from dotenv import load_dotenv
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import SystemMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import END, StateGraph
+from typing import Annotated, List, TypedDict
 
-from tools import get_company_info, get_stock_data, get_market_sentiment
+from tools import get_company_info, get_market_sentiment, get_stock_data, get_technical_indicators
 
 
 class AgentState(TypedDict):
@@ -16,11 +17,18 @@ class AgentState(TypedDict):
 load_dotenv()
 api_key = os.getenv("GOOGLE_API")
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", temperature=0, api_key = api_key)
-tools = [get_stock_data, get_company_info, get_market_sentiment]
+tools = [get_stock_data, get_company_info, get_market_sentiment, get_technical_indicators]
 llm_with_tools = llm.bind_tools(tools)
 
 def call_gemini(state: AgentState):
-    response = llm_with_tools.invoke(state["messages"])
+    current_date = datetime.now().strftime("%d/%m/%Y")
+    system_instruction = SystemMessage(content=(
+        f"Hôm nay là ngày {current_date}. Bạn là một trợ lý phân tích tài chính chuyên nghiệp. "
+        "Khi người dùng yêu cầu dữ liệu, hãy kiểm tra ngày hiện tại để xác định xem đó là quá khứ hay tương lai. "
+        "Nếu ngày yêu cầu nhỏ hơn ngày hiện tại, hãy sử dụng tool để truy xuất dữ liệu."
+    ))
+    messages = [system_instruction] + state["messages"]
+    response = llm_with_tools.invoke(messages)
     return {"messages": [response]}
 
 def execute_tool_calls(state: AgentState):
@@ -32,8 +40,8 @@ def execute_tool_calls(state: AgentState):
         selected_tool = {
             "get_stock_data": get_stock_data,
             "get_company_info": get_company_info,
-            "get_market_sentiment": get_market_sentiment
-
+            "get_market_sentiment": get_market_sentiment,
+            "get_technical_indicators": get_technical_indicators
         }[tool_call["name"]]
 
         output = selected_tool.invoke(tool_call["args"])
