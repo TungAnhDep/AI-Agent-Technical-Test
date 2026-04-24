@@ -12,13 +12,17 @@ from agent import app as agent_workflow
 
 app = FastAPI(title="Financial AI Agent API", version="1.0")
 app.mount("/download", StaticFiles(directory="exports"), name="download")
+
+
 class ChatRequest(BaseModel):
     query: str
+
 
 class ChatResponse(BaseModel):
     query: str
     response: FinancialResponse
     steps: List[dict]
+
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: Request, chat_request: ChatRequest):
@@ -29,19 +33,19 @@ async def chat_endpoint(request: Request, chat_request: ChatRequest):
             "messages": [HumanMessage(content=chat_request.query)]
         }
         steps_log = []
-        
+
         final_structured_data = FinancialResponse(summary="Đang xử lý...")
-        
+
         async for event in agent_workflow.astream(
-            input_state, 
-            config = config,
+            input_state,
+            config=config,
             stream_mode="updates",
         ):
             for node, value in event.items():
                 last_msg = value["messages"][-1]
-                
+
                 step_info = {"node": node}
-                
+
                 if node == "summarizer":
                     content = last_msg.content
                     try:
@@ -55,24 +59,28 @@ async def chat_endpoint(request: Request, chat_request: ChatRequest):
                             summary=f"Lỗi định dạng dữ liệu: {str(e)}"
                         )
                         step_info["action"] = "Lỗi khi cấu trúc hóa"
-                
-                elif node == "gemini_brain" and hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
+
+                elif (
+                    node == "gemini_brain"
+                    and hasattr(last_msg, "tool_calls")
+                    and last_msg.tool_calls
+                ):
                     step_info["action"] = f"Gọi hàm: {last_msg.tool_calls[0]['name']}"
-                
+
                 steps_log.append(step_info)
 
         return ChatResponse(
-            query=chat_request.query,
-            response=final_structured_data,
-            steps=steps_log
+            query=chat_request.query, response=final_structured_data, steps=steps_log
         )
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/")
 def health_check():
     return {"status": "running", "agent": "Financial Agent v1"}
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
