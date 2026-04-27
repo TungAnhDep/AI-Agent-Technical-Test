@@ -1,24 +1,38 @@
+# Web API
 fastapi
 uvicorn
 pydantic
 python-dotenv
 
+# LLM agent (LangGraph + Gemini)
 langchain-core
 langchain-google-genai
 langgraph
 
+# Crawlers + PDF/OCR
 playwright
-requests
+httpx
+selectolax
 pymupdf
 pytesseract
 Pillow
 
+# Data sources + processing
 vnstock
 pandas
 pandas-ta
 openpyxl
 dateparser
 
+# Database
 psycopg2-binary
+
+# Sentiment analysis (PhoBERT via HuggingFace)
 transformers
 torch
+
+# Scheduling
+apscheduler
+
+# Tests
+pytest
