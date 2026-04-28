@@ -196,12 +196,11 @@ def get_company_info(ticker: str, category: str, filter_by: str = "working"):
 
     try:
         with _quiet_stdout():
-            company = Company(symbol=ticker, source="KBS")
+            company = Company(symbol=ticker.upper(), source="KBS")
             data_map = {
                 "profile": company.overview,
                 "shareholders": company.shareholders,
                 "subsidiaries": company.subsidiaries,
-                "affiliates": company.affiliates,
                 "leadership": company.officers,
             }
             data_func = data_map.get(category)
@@ -213,8 +212,9 @@ def get_company_info(ticker: str, category: str, filter_by: str = "working"):
             else:
                 df = data_func()
         result = df.to_dict(orient="records")
-        return result[:3]  # Giới hạn số lượng bản ghi
+        return result[:3]
     except Exception as e:
+        print(f"[get_company_info] {ticker}/{category} raised {type(e).__name__}: {e}")
         return f"{ERROR_PREFIX}: get_company_info {ticker}/{category} — {e}"
 
 
