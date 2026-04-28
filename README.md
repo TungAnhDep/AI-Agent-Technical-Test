@@ -30,7 +30,7 @@ Agent: → fetches price + SMA/RSI (3-month window)
   - `get_financial_reports` — BCTC PDFs (audited annual + quarterly)
   - `get_financial_metrics` — structured numbers (revenue, NPAT, EPS) extracted from BCTC
 - **Three crawlers** keeping the data warehouse fresh from CafeF
-- **Scheduler** automating the full pipeline (news every 30 min, analyst/BCTC daily)
+- **Scheduler** automating the full pipeline (news every 30 min, analyst/financial reports daily)
 - **Structured Pydantic output** so frontends get a stable schema
 - **FastAPI HTTP API** at `/chat` for integration
 
