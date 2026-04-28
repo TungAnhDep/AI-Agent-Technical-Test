@@ -33,7 +33,7 @@ Agent: → fetches price + SMA/RSI (3-month window)
 - **Scheduler** automating the full pipeline (news every 30 min, analyst/financial reports daily)
 - **Structured Pydantic output** so frontends get a stable schema
 - **FastAPI HTTP API** at `/chat` for integration
-
+- **Streamlit frontend** — chat-style UI with structured tabs (technical / sentiment / analyst / metrics / financial)
 ## Architecture
 
 ```
@@ -133,6 +133,27 @@ curl -X POST http://localhost:8000/chat \
      -H "Content-Type: application/json" \
      -d '{"query": "Tư vấn FPT trong 3 tháng tới"}'
 ```
+### Launch the Streamlit frontend
+
+In a second terminal (the FastAPI server must already be running):
+
+```bash
+streamlit run streamlit_app.py
+```
+
+Opens at `http://localhost:8501`. Type a question in the chat input or click an example from the sidebar.
+
+Override the agent URL if needed:
+
+```bash
+AGENT_URL=http://other-host:8000 streamlit run streamlit_app.py
+```
+
+Features:
+- Chat-style conversation with persisted session history
+- Structured tabs (Kỹ thuật / Tâm lý / CTCK / Chỉ tiêu / BCTC / Hồ sơ) auto-shown for fields the agent populated
+- Excel download button when `get_stock_data` returns one
+- Steps inspector showing which graph nodes ran (debugging)
 
 ### Run the scheduler (automated daily crawls)
 
@@ -170,6 +191,7 @@ python -m scripts.extract_financial_metrics
 ├── agent.py                  # LangGraph workflow + Pydantic response schema
 ├── tools.py                  # 6 tools the agent calls
 ├── main.py                   # FastAPI server
+├── streamlit_app.py          # Streamlit chat frontend
 ├── config.py                 # All concurrency/horizon/output-cap constants
 ├── requirements.txt
 ├── pytest.ini
