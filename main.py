@@ -3,20 +3,36 @@ import os
 from typing import List
 
 import uvicorn
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, ValidationError
 
 from agent import AgentState, FinancialResponse
-from agent import app as agent_workflow
+from agent import app as agent_workflow, llm
 
 # Resolve `exports/` relative to this file, NOT the process cwd. Otherwise
 # launching uvicorn from a different directory breaks /download URLs.
 EXPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports")
 os.makedirs(EXPORT_DIR, exist_ok=True)
 
-app = FastAPI(title="Financial AI Agent API", version="1.0")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Pre-warm Gemini at startup so the first user request doesn't pay the
+    TLS handshake + auth cold start."""
+    try:
+        await llm.ainvoke("ping")
+        print("Khởi động Agent thành công")
+    except Exception as e:
+        print(f"Khởi động thất bại: {e}")
+    yield
+    print("Tắt lifespan")
+
+
+app = FastAPI(title="Financial AI Agent API", version="1.0", lifespan=lifespan)
 app.mount("/download", StaticFiles(directory=EXPORT_DIR), name="download")
 
 
